@@ -5,6 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import translate from "translate";
+import Sanscript from "@indic-transliteration/sanscript"; // New import
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ const Chat = mongoose.model("Chat", ChatSchema);
 
 // Configure translation engine
 translate.engine = "google";
-translate.key = process.env.GOOGLE_TRANSLATE_API_KEY || undefined; // Optional API key for higher limits
+translate.key = process.env.GOOGLE_TRANSLATE_API_KEY || undefined;
 
 const app = express();
 const server = http.createServer(app);
@@ -52,7 +53,21 @@ const users = {};
 const translateText = async (text, fromLang, toLang) => {
 	try {
 		if (fromLang === toLang) return text;
-		const translated = await translate(text, { from: fromLang, to: toLang });
+
+		let textToTranslate = text;
+		// Special handling for Hinglish (Romanized Hindi)
+		if (fromLang === "hg") {
+			// Transliterate Romanized Hindi to Devanagari script
+			textToTranslate = Sanscript.t(text, "itrans", "devanagari");
+			console.log(`Transliterated "${text}" to "${textToTranslate}"`);
+			fromLang = "hi"; // Treat as Hindi for translation
+		}
+		if (toLang === "hg") return text; // Hinglish users receive messages as-is
+
+		const translated = await translate(textToTranslate, {
+			from: fromLang,
+			to: toLang,
+		});
 		return translated;
 	} catch (error) {
 		console.error("Translation Error:", error.message);

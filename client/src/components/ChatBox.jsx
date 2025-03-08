@@ -26,6 +26,20 @@ const messageVariants = {
 	},
 };
 
+const sidebarVariants = {
+	hidden: { x: "-100%", opacity: 0 },
+	visible: {
+		x: 0,
+		opacity: 1,
+		transition: { duration: 0.3, ease: "easeInOut" },
+	},
+};
+
+const buttonVariants = {
+	closed: { rotate: 0 },
+	open: { rotate: 90 },
+};
+
 const ChatBox = () => {
 	const [message, setMessage] = useState("");
 	const [chat, setChat] = useState([]);
@@ -39,17 +53,31 @@ const ChatBox = () => {
 	const [error, setError] = useState("");
 	const mediaRecorderRef = useRef(null);
 	const audioChunksRef = useRef([]);
+	const chatContainerRef = useRef(null); // Ref for chat container
+
+	// Scroll to bottom when chat updates
+	useEffect(() => {
+		if (chatContainerRef.current) {
+			chatContainerRef.current.scrollTo({
+				top: chatContainerRef.current.scrollHeight,
+				behavior: "smooth",
+			});
+		}
+	}, [chat]);
 
 	useEffect(() => {
 		if (isUserSet) {
 			socket.emit("join_chat", { username, language, color });
 
 			socket.on("chat_history", (history) => {
-				setChat(history);
+				setChat(history.map((msg) => ({ ...msg, animation: false })));
 			});
 
 			socket.on("receive_message", (data) => {
-				setChat((prev) => [...prev, { ...data, animation: true }]);
+				setChat((prev) => [
+					...prev,
+					{ ...data, animation: true, id: Date.now() },
+				]);
 			});
 
 			socket.on("user_list", (users) => {
@@ -130,7 +158,7 @@ const ChatBox = () => {
 
 	const playMessage = (text, lang) => {
 		const utterance = new SpeechSynthesisUtterance(text);
-		utterance.lang = lang;
+		utterance.lang = lang === "hg" ? "hi-IN" : lang;
 		window.speechSynthesis.speak(utterance);
 	};
 
@@ -176,6 +204,7 @@ const ChatBox = () => {
 									<option value="fr">French</option>
 									<option value="hi">Hindi</option>
 									<option value="de">German</option>
+									<option value="hg">Hinglish</option>
 								</select>
 								<div>
 									<label className="block text-sm font-medium text-gray-700 mb-2">
@@ -208,41 +237,55 @@ const ChatBox = () => {
 					</div>
 				) : (
 					<div className="flex flex-row h-[80vh]">
-						<div
-							className={`md:w-64 w-0 md:flex flex-col bg-gray-50 text-gray-800 border-r border-gray-200 transition-all duration-300 ease-in-out ${
-								sidebarOpen ? "w-64" : "w-0 md:w-64"
-							} overflow-y-auto`}
-						>
-							<div className="p-3 border-b border-gray-200">
-								<h3 className="text-sm font-semibold">Online Users</h3>
-							</div>
-							<div className="flex-1 p-2 space-y-2">
-								{usersList
-									.filter((u) => u.username === username)
-									.map((u, index) => (
-										<div key={index} className="flex items-center">
-											<span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-											<p className="text-xs font-medium">ME ({u.username})</p>
-										</div>
-									))}
-								{usersList
-									.filter((u) => u.username !== username)
-									.map((u, index) => (
-										<div key={index} className="flex items-center">
-											<span
-												className={`w-2 h-2 rounded-full mr-2 ${
-													u.status === "online" ? "bg-green-400" : "bg-red-400"
-												}`}
-											></span>
-											<p className="text-xs">{u.username}</p>
-										</div>
-									))}
-							</div>
-						</div>
+						<AnimatePresence>
+							{sidebarOpen && (
+								<motion.div
+									variants={sidebarVariants}
+									initial="hidden"
+									animate="visible"
+									exit="hidden"
+									className="fixed md:hidden w-64 flex flex-col bg-gray-50 text-gray-800 shadow-lg rounded-r-2xl z-40 h-full"
+								>
+									<div className="p-3 border-b border-gray-200">
+										<h3 className="text-sm font-semibold text-gray-700">
+											Online Users
+										</h3>
+									</div>
+									<div className="flex-1 p-2 space-y-2 overflow-y-auto">
+										{usersList
+											.filter((u) => u.username === username)
+											.map((u, index) => (
+												<div key={index} className="flex items-center">
+													<span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+													<p className="text-xs font-medium text-gray-900">
+														ME ({u.username})
+													</p>
+												</div>
+											))}
+										{usersList
+											.filter((u) => u.username !== username)
+											.map((u, index) => (
+												<div key={index} className="flex items-center">
+													<span
+														className={`w-2 h-2 rounded-full mr-2 ${
+															u.status === "online"
+																? "bg-green-400"
+																: "bg-red-400"
+														}`}
+													></span>
+													<p className="text-xs text-gray-700">{u.username}</p>
+												</div>
+											))}
+									</div>
+								</motion.div>
+							)}
+						</AnimatePresence>
 
 						{isUserSet && (
-							<button
-								className="md:hidden fixed top-4 left-4 z-50 bg-orange-300 text-white p-2 rounded-full shadow-lg hover:bg-orange-400 transition"
+							<motion.button
+								variants={buttonVariants}
+								animate={sidebarOpen ? "open" : "closed"}
+								className="md:hidden fixed top-4 left-4 z-50 bg-orange-300 text-white p-2 rounded-full shadow-lg hover:bg-orange-400 transition focus:outline-none"
 								onClick={() => setSidebarOpen(!sidebarOpen)}
 							>
 								<svg
@@ -258,7 +301,7 @@ const ChatBox = () => {
 										d="M4 6h16M4 12h16m-7 6h7"
 									/>
 								</svg>
-							</button>
+							</motion.button>
 						)}
 
 						<div className="flex-1 flex flex-col">
@@ -269,7 +312,10 @@ const ChatBox = () => {
 								{error && <p className="text-red-600 text-sm">{error}</p>}
 							</div>
 
-							<div className="flex-1 p-3 overflow-y-auto bg-gray-50">
+							<div
+								ref={chatContainerRef}
+								className="flex-1 p-3 overflow-y-auto bg-gray-50"
+							>
 								{chat.length === 0 ? (
 									<div className="text-center text-gray-500 py-4">
 										<p className="text-sm">
@@ -278,9 +324,12 @@ const ChatBox = () => {
 									</div>
 								) : (
 									<AnimatePresence>
-										{chat.slice(-10).map((msg, index) => (
+										{chat.slice(-10).map((msg) => (
 											<motion.div
-												key={index}
+												key={
+													msg.id ||
+													`${msg.sender}-${msg.timestamp}-${msg.message}`
+												}
 												initial="hidden"
 												animate="visible"
 												exit="hidden"

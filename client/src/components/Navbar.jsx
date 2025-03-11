@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { MdLogin } from "react-icons/md";
-import { MdOutlineAccountCircle } from "react-icons/md";
+import { MdLogin, MdOutlineAccountCircle } from "react-icons/md";
 import { RiSpeakAiLine } from "react-icons/ri";
 import { TiThMenuOutline } from "react-icons/ti";
 import AuthModal from "./AuthModal";
@@ -14,119 +13,110 @@ const NavbarMenu = [
 
 const Navbar = () => {
 	const [isAuthOpen, setAuthOpen] = useState(false);
-	const [authType, setAuthType] = useState("login"); // "login" or "register"
-	const [menuOpen, setMenuOpen] = useState(false); // State for mobile menu
+	const [authType, setAuthType] = useState("login");
+	const [menuOpen, setMenuOpen] = useState(false);
 
 	const openModal = (type) => {
 		setAuthType(type);
 		setAuthOpen(true);
-		setMenuOpen(false); // Close menu when modal opens
+		setMenuOpen(false);
 	};
 
 	return (
 		<>
-			<nav className="m-5">
-				<div className="container flex items-center justify-between py-8 mx-auto px-4 sm:px-8 lg:px-16">
-					{/* Logo section */}
-					<div className="flex items-center gap-2 py-3 text-2xl font-bold uppercase">
-						<RiSpeakAiLine />
-						<p>Let's</p>
-						<p className="text-orange-400">Talk</p>
-					</div>
+			<nav className="sticky top-0 z-50 bg-white shadow-md">
+				<div className="container mx-auto px-4 sm:px-8 lg:px-16 py-4 flex items-center justify-between">
+					{/* Logo */}
+					<a
+						href="/"
+						className="flex items-center gap-2 text-2xl font-bold uppercase"
+					>
+						<RiSpeakAiLine className="text-orange-500" />
+						<span>Let’s</span>
+						<span className="text-orange-400">Talk</span>
+					</a>
 
-					{/* Menu section - Visible only on larger screens */}
-					<div className="hidden md:block">
-						<ul className="flex items-center gap-6 text-gray-600">
+					{/* Desktop Menu */}
+					<div className="hidden md:flex items-center gap-8">
+						<ul className="flex gap-6">
 							{NavbarMenu.map((item) => (
 								<li key={item.id}>
 									<a
 										href={item.link}
-										className="relative inline-block py-1 px-1 text-gray-600 font-semibold hover:text-orange-400 transition duration-300
-            after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-orange-400 
-            after:transition-all after:duration-300 hover:after:w-full"
+										className="text-gray-600 font-semibold hover:text-orange-500 transition duration-300 relative group"
+									>
+										{item.title}
+										<span className="absolute left-0 bottom-[-4px] w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full" />
+									</a>
+								</li>
+							))}
+						</ul>
+						<div className="flex gap-4">
+							<button
+								onClick={() => openModal("register")}
+								className="flex items-center gap-1 text-gray-600 hover:text-orange-500 font-semibold transition"
+							>
+								Register <MdOutlineAccountCircle />
+							</button>
+							<button
+								onClick={() => openModal("login")}
+								className="flex items-center gap-1 text-gray-600 hover:text-orange-500 font-semibold transition"
+							>
+								Login <MdLogin />
+							</button>
+						</div>
+					</div>
+
+					{/* Mobile Menu Toggle */}
+					<div className="md:hidden">
+						<TiThMenuOutline
+							className="text-3xl cursor-pointer text-gray-600"
+							onClick={() => setMenuOpen(!menuOpen)}
+						/>
+					</div>
+				</div>
+
+				{/* Mobile Menu */}
+				{menuOpen && (
+					<div className="md:hidden bg-white shadow-lg p-4">
+						<ul className="flex flex-col gap-4 text-gray-600">
+							{NavbarMenu.map((item) => (
+								<li key={item.id}>
+									<a
+										href={item.link}
+										className="block py-2 hover:text-orange-500 font-semibold transition"
+										onClick={() => setMenuOpen(false)}
 									>
 										{item.title}
 									</a>
 								</li>
 							))}
+							<li>
+								<button
+									onClick={() => openModal("register")}
+									className="w-full text-left py-2 hover:text-orange-500 font-semibold transition"
+								>
+									Register
+								</button>
+							</li>
+							<li>
+								<button
+									onClick={() => openModal("login")}
+									className="w-full text-left py-2 hover:text-orange-500 font-semibold transition"
+								>
+									Login
+								</button>
+							</li>
 						</ul>
 					</div>
-
-					{/* Auth Buttons - Hidden on small screens */}
-					<div className="hidden md:flex items-center">
-						<button
-							onClick={() => openModal("register")}
-							className="flex items-center gap-2 hover:bg-orange-500 hover:text-white rounded-full p-2 duration-200 cursor-pointer"
-						>
-							Register <MdOutlineAccountCircle />
-						</button>
-						<button
-							onClick={() => openModal("login")}
-							className="flex items-center gap-2 hover:bg-orange-500 hover:text-white rounded-full p-2 duration-200 cursor-pointer"
-						>
-							Login <MdLogin />
-						</button>
-					</div>
-
-					{/* Hamburger Menu - Only on small screens */}
-					<div className="md:hidden">
-						<TiThMenuOutline
-							className="text-4xl cursor-pointer"
-							onClick={() => setMenuOpen(!menuOpen)}
-						/>
-					</div>
-				</div>
+				)}
 			</nav>
 
-			{/* Mobile Menu Dropdown */}
-			{menuOpen && (
-				<div className="md:hidden absolute top-20 w-full bg-orange-100 border border-orange-600 rounded-2xl shadow-lg p-4 z-50">
-					<ul className="flex flex-col items-center gap-4 text-gray-700">
-						<li>
-							<a href="/" className="hover:text-orange-400">
-								Home
-							</a>
-						</li>
-						<li>
-							<a href="/about" className="hover:text-orange-400">
-								About
-							</a>
-						</li>
-						<li>
-							<a href="/services" className="hover:text-orange-400">
-								Services
-							</a>
-						</li>
-						<li>
-							<a href="/contact" className="hover:text-orange-400">
-								Contact
-							</a>
-						</li>
-						<hr className="w-full border-gray-300" />
-
-						{/* Auth Buttons inside Mobile Menu */}
-						<button
-							onClick={() => openModal("register")}
-							className="w-full text-center bg-orange-500 text-white p-2 rounded-md hover:bg-orange-600"
-						>
-							Register
-						</button>
-						<button
-							onClick={() => openModal("login")}
-							className="w-full text-center bg-orange-500 text-white p-2 rounded-md hover:bg-orange-600"
-						>
-							Login
-						</button>
-					</ul>
-				</div>
-			)}
-
-			{/* Auth Modal */}
 			<AuthModal
 				isOpen={isAuthOpen}
 				onClose={() => setAuthOpen(false)}
 				type={authType}
-				setAuthType={setAuthType} // ✅ Allows switching between login & register
+				setAuthType={setAuthType}
 			/>
 		</>
 	);

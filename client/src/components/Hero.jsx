@@ -3,37 +3,40 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
-	const navigate = useNavigate(); // React Router navigation
+	const navigate = useNavigate();
 
 	const handleStart = () => {
-		navigate("/chatbox"); // Navigate to ChatBox
+		navigate("/chatbox");
 	};
 
 	return (
-		<section className="flex flex-col items-center justify-center text-center py-16 px-6 sm:px-12">
-			<div className="bg-orange-100 border border-orange-400 rounded-2xl p-6 sm:p-10 shadow-2xl w-full max-w-4xl">
-				<h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800">
-					Chat Without Language Barriers
+		<section className="py-20 px-6 sm:px-12 text-center">
+			<motion.div
+				className="bg-orange-100 border border-orange-300 rounded-2xl p-8 sm:p-12 shadow-xl max-w-3xl mx-auto"
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.8 }}
+			>
+				<h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-4">
+					Communicate Beyond Borders
 				</h1>
-				<p className="mt-4 text-lg sm:text-xl md:text-2xl text-gray-700 font-medium">
-					Instantly translate messages in real-time and communicate effortlessly with anyone, anywhere.
+				<p className="text-lg sm:text-xl text-gray-700 mb-8">
+					Experience effortless, real-time message translation and connect with
+					anyone, anywhere, instantly.
 				</p>
-				<div className="mt-6">
-					<motion.button
-						whileTap={{
-							scale: 0.9,
-							backgroundColor: "#f97316",
-							color: "#fff",
-						}}
-						whileHover={{ scale: 1.1 }}
-						className="bg-white text-orange-500 px-6 py-3 rounded-xl border border-orange-400 font-bold 
-              hover:bg-orange-400 hover:text-white transition cursor-pointer text-lg"
-						onClick={handleStart} // Navigate to ChatBox
-					>
-						Start Chatting
-					</motion.button>
-				</div>
-			</div>
+				<motion.button
+					whileHover={{
+						scale: 1.05,
+						backgroundColor: "#f97316",
+						color: "#fff",
+					}}
+					whileTap={{ scale: 0.95 }}
+					className="bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold text-lg shadow-md hover:bg-orange-600 transition"
+					onClick={handleStart}
+				>
+					Start Chatting Now
+				</motion.button>
+			</motion.div>
 		</section>
 	);
 };

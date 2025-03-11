@@ -5,7 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import translate from "translate";
-import Sanscript from "@indic-transliteration/sanscript"; // New import
+import Sanscript from "@indic-transliteration/sanscript";
 
 dotenv.config();
 
@@ -37,6 +37,14 @@ const ChatSchema = new mongoose.Schema({
 });
 const Chat = mongoose.model("Chat", ChatSchema);
 
+const ContactSchema = new mongoose.Schema({
+	name: { type: String, required: true },
+	email: { type: String, required: true },
+	message: { type: String, required: true },
+	timestamp: { type: Date, default: Date.now },
+});
+const Contact = mongoose.model("Contact", ContactSchema);
+
 // Configure translation engine
 translate.engine = "google";
 translate.key = process.env.GOOGLE_TRANSLATE_API_KEY || undefined;
@@ -48,6 +56,19 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 
+// Contact Submission Route
+app.post("/api/contact", async (req, res) => {
+	const { name, email, message } = req.body;
+	try {
+		const newContact = new Contact({ name, email, message });
+		await newContact.save();
+		res.status(201).json({ message: "Contact saved successfully" });
+	} catch (error) {
+		console.error("Error saving contact:", error);
+		res.status(500).json({ message: "Error saving contact", error });
+	}
+});
+
 const users = {};
 
 const translateText = async (text, fromLang, toLang) => {
@@ -55,14 +76,12 @@ const translateText = async (text, fromLang, toLang) => {
 		if (fromLang === toLang) return text;
 
 		let textToTranslate = text;
-		// Special handling for Hinglish (Romanized Hindi)
 		if (fromLang === "hg") {
-			// Transliterate Romanized Hindi to Devanagari script
 			textToTranslate = Sanscript.t(text, "itrans", "devanagari");
 			console.log(`Transliterated "${text}" to "${textToTranslate}"`);
-			fromLang = "hi"; // Treat as Hindi for translation
+			fromLang = "hi";
 		}
-		if (toLang === "hg") return text; // Hinglish users receive messages as-is
+		if (toLang === "hg") return text;
 
 		const translated = await translate(textToTranslate, {
 			from: fromLang,
@@ -71,7 +90,7 @@ const translateText = async (text, fromLang, toLang) => {
 		return translated;
 	} catch (error) {
 		console.error("Translation Error:", error.message);
-		return text; // Fallback to original text
+		return text;
 	}
 };
 
@@ -111,7 +130,6 @@ io.on("connection", async (socket) => {
 		await Chat.create(chatMessage);
 		console.log(`Saved to DB: ${message}`);
 
-		// Send to sender
 		io.to(socket.id).emit("receive_message", {
 			sender: "Me",
 			color: senderData.color,
@@ -119,7 +137,6 @@ io.on("connection", async (socket) => {
 			isVoice,
 		});
 
-		// Send to all other users with translation
 		for (let socketId in users) {
 			if (socketId !== socket.id) {
 				const receiverLang = users[socketId].language;
